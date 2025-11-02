@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinner Decider - Voting</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Vote for your favorite restaurants!</h1>
+        <p>Session Code: {{ session_code }}</p>
+        <form action="/submit_vote/{{ session_code }}" method="post">
+            {% for restaurant in restaurants %}
+                <div class="restaurant-option">
+                    <input type="checkbox" id="{{ restaurant.name }}" name="restaurant" value="{{ restaurant.name }}">
+                    <label for="{{ restaurant.name }}">{{ restaurant.name }} - <em>{{ restaurant.vicinity }}</em></label>
+                </div>
+            {% endfor %}
+            <button type="submit">Submit Votes</button>
+        </form>
+    </div>
+</body>
+</html>

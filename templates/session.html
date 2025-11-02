@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Session {{ session_code }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Session Code: {{ session_code }}</h1>
+        <p>Welcome, User {{ user_id }}!</p>
+        <p>Share this code with your partner: <strong>{{ session_code }}</strong></p>
+        <p id="location-status">Please share your location to continue.</p>
+        <button id="share-location-btn">Share Location</button>
+        <a href="{{ url_for('questionnaire', session_code=session_code) }}" id="start-questionnaire-link" class="disabled-link"><button id="start-questionnaire-btn" disabled>Start Questionnaire</button></a>
+        <br><br>
+        <a href="/">Back to Home</a>
+    </div>
+    <script>
+        document.getElementById('share-location-btn').addEventListener('click', () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const location = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    fetch(`/share_location/{{ session_code }}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(location)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            document.getElementById('location-status').textContent = 'Location shared successfully!';
+                            document.getElementById('start-questionnaire-btn').disabled = false;
+                            document.getElementById('start-questionnaire-link').classList.remove('disabled-link');
+                        } else {
+                            document.getElementById('location-status').textContent = 'Error sharing location.';
+                        }
+                    });
+                });
+            } else {
+                document.getElementById('location-status').textContent = 'Geolocation is not supported by this browser.';
+            }
+        });
+    </script>
+    <style>
+        .disabled-link {
+            pointer-events: none;
+        }
+    </style>
+</body>
+</html>

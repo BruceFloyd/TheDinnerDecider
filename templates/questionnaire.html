@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinner Decider - Questionnaire</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Food Preference Questionnaire</h1>
+        <p>Session Code: {{ session_code }}</p>
+        <form action="/submit_questionnaire/{{ session_code }}" method="post">
+            <label>Favorite Cuisines:</label>
+            <div class="cuisine-options">
+                {% for cuisine in cuisines %}
+                    <input type="checkbox" id="{{ cuisine }}" name="cuisine" value="{{ cuisine }}">
+                    <label for="{{ cuisine }}">{{ cuisine }}</label>
+                {% endfor %}
+            </div>
+
+            <label for="radius">Search Radius (in miles):</label>
+            <select id="radius" name="radius" required>
+                <option value="0.5">0.5</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="20">20</option>
+            </select>
+
+            <label for="dietary">Dietary Restrictions:</label>
+            <select id="dietary" name="dietary">
+                <option value="none">None</option>
+                <option value="vegetarian">Vegetarian</option>
+                <option value="vegan">Vegan</option>
+                <option value="gluten-free">Gluten-Free</option>
+            </select>
+
+            <label for="spice_level">Spice Level Preference:</label>
+            <select id="spice_level" name="spice_level">
+                <option value="mild">Mild</option>
+                <option value="medium">Medium</option>
+                <option value="hot">Hot</option>
+            </select>
+
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</body>
+</html>

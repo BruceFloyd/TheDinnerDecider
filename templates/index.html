@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinner Decider</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Dinner Decider!</h1>
+        <p>Choose an option:</p>
+
+        <div class="session-options">
+            <div class="option-box">
+                <h2>Create a Session</h2>
+                <form action="/create_session" method="post">
+                    <button type="submit">Create Session</button>
+                </form>
+            </div>
+
+            <div class="option-box">
+                <h2>Join a Session</h2>
+                <form action="/join_session" method="post">
+                    <input type="text" name="session_code" placeholder="Enter 4-digit code" maxlength="4" required>
+                    <button type="submit">Join Session</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

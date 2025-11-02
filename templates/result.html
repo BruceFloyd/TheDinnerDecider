@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinner Decider - Result</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Your Dinner Decision!</h1>
+        <p>Session Code: {{ session_code }}</p>
+        {% if chosen_restaurant %}
+            <p>You should go to: <strong>{{ chosen_restaurant }}</strong></p>
+        {% else %}
+            <p>No common restaurant found based on your votes.</p>
+        {% endif %}
+        <a href="/">Start a new session</a>
+    </div>
+</body>
+</html>

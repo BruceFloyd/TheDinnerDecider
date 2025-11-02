@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waiting for Vote...</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta http-equiv="refresh" content="5">
+</head>
+<body>
+    <div class="container">
+        <h1>Waiting for your partner to submit their votes...</h1>
+        <p>Session Code: {{ session_code }}</p>
+        <p>You will be redirected automatically.</p>
+    </div>
+</body>
+</html>
