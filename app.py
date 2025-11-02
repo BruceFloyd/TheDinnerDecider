@@ -90,8 +90,6 @@ def submit_questionnaire(session_code):
         if user_id:
             responses = {
                 'cuisine': request.form.getlist('cuisine'),
-                'dietary': request.form['dietary'],
-                'spice_level': request.form['spice_level'],
                 'radius': float(request.form['radius'])
             }
             sessions[session_code][f'user{user_id}_responses'] = responses
