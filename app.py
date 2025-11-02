@@ -201,7 +201,7 @@ def result(session_code):
         common_votes = list(set(user1_votes) & set(user2_votes))
 
         if common_votes:
-            chosen_restaurant = common_votes[0] # For simplicity, pick the first common one
+            chosen_restaurant = random.choice(common_votes) # Randomly pick one from the common ones
         else:
             chosen_restaurant = "No common preferences found. Please try again!"
 
