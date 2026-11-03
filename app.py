@@ -1,6 +1,5 @@
 import math
 import os
-import random
 import secrets
 import threading
 import time
@@ -29,10 +28,18 @@ RADIUS_OPTIONS = [1, 2, 3, 5, 10, 20]
 MAX_CANDIDATES = 12
 MAX_CUISINE_SEARCHES = 5
 SESSION_TTL_SECONDS = 24 * 60 * 60
+MAX_LIVE_SESSIONS = 10000
+# 31^6 is about 887 million codes, and failed lookups are rate-limited per IP,
+# so a stranger can't guess their way into someone's session.
+CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'  # No 0/O or 1/I/L.
+CODE_LENGTH = 6
+FAILED_LOOKUP_LIMIT = 20
+FAILED_LOOKUP_WINDOW_SECONDS = 10 * 60
 METERS_PER_MILE = 1609.34
 
 sessions = {}
 sessions_lock = threading.Lock()
+failed_lookups = {}  # IP -> timestamps of lookups for codes that don't exist
 
 # Demo mode location: downtown Gainesville, FL.
 DEMO_POINT = (29.6516, -82.3248)
@@ -241,6 +248,37 @@ def purge_old_sessions():
     cutoff = time.time() - SESSION_TTL_SECONDS
     for code in [c for c, d in sessions.items() if d['created'] < cutoff]:
         del sessions[code]
+    lookup_cutoff = time.time() - FAILED_LOOKUP_WINDOW_SECONDS
+    for ip in [ip for ip, times in failed_lookups.items() if not times or times[-1] < lookup_cutoff]:
+        del failed_lookups[ip]
+
+
+def new_code():
+    """Returns an unused session code, or None. Call with sessions_lock held."""
+    for _ in range(10):
+        code = ''.join(secrets.choice(CODE_ALPHABET) for _ in range(CODE_LENGTH))
+        if code not in sessions:
+            return code
+    return None
+
+
+def too_many_failed_lookups():
+    now = time.time()
+    ip = request.remote_addr or 'unknown'
+    recent = [t for t in failed_lookups.get(ip, []) if now - t < FAILED_LOOKUP_WINDOW_SECONDS]
+    failed_lookups[ip] = recent
+    return len(recent) >= FAILED_LOOKUP_LIMIT
+
+
+def find_session(code):
+    """Looks up a session by a code someone typed or followed, counting misses against their IP."""
+    if too_many_failed_lookups():
+        return None, 'Too many wrong codes. Wait a few minutes and try again.'
+    data = sessions.get(code)
+    if data is None:
+        failed_lookups.setdefault(request.remote_addr or 'unknown', []).append(time.time())
+        return None, 'That session has expired or never existed. Check the code or start a new one.'
+    return data, None
 
 
 def seat_for(code):
@@ -303,9 +341,10 @@ def index():
 def create_session():
     with sessions_lock:
         purge_old_sessions()
-        code = str(random.randint(1000, 9999))
-        while code in sessions:
-            code = str(random.randint(1000, 9999))
+        code = new_code() if len(sessions) < MAX_LIVE_SESSIONS else None
+        if code is None:
+            flash('Dinner Decider is busy right now. Try again in a minute.')
+            return render_template('index.html'), 503
         sessions[code] = new_session_data()
         claim_seat(code)
     return redirect(url_for('session_page', session_code=code))
@@ -313,17 +352,15 @@ def create_session():
 
 @app.route('/join_session', methods=['POST'])
 def join_session():
-    code = request.form.get('session_code', '').strip()
-    if code not in sessions:
-        flash(f'No session found with code "{code}". Check the code and try again.')
-        return redirect(url_for('index'))
+    code = request.form.get('session_code', '').strip().upper()
     return claim_seat_route(code)
 
 
 @app.route('/session/<session_code>/join', methods=['POST'])
 def claim_seat_route(session_code):
-    if session_code not in sessions:
-        flash('That session has expired or never existed. Start a new one.')
+    data, error = find_session(session_code)
+    if error:
+        flash(error)
         return redirect(url_for('index'))
     with sessions_lock:
         seat = claim_seat(session_code)
@@ -335,15 +372,16 @@ def claim_seat_route(session_code):
 @app.route('/session/<session_code>')
 def session_page(session_code):
     """One URL per session; shows whichever step this person is on."""
-    data = sessions.get(session_code)
-    if not data:
-        flash('That session has expired or never existed. Start a new one.')
-        return redirect(url_for('index'))
     seat = seat_for(session_code)
     if seat is None:
+        data, error = find_session(session_code)
+        if error:
+            flash(error)
+            return redirect(url_for('index'))
         if data['seats'] >= 2:
             return render_template('full.html', session_code=session_code), 403
         return render_template('join.html', session_code=session_code)
+    data = sessions[session_code]
 
     stage = stage_for(data, seat)
     share_url = url_for('session_page', session_code=session_code, _external=True)

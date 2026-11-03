@@ -37,6 +37,8 @@ Sessions live in memory and expire after 24 hours, so run a single worker proces
 gunicorn -w 1 --threads 8 app:app
 ```
 
+Wrong session codes are rate-limited per IP address. Behind a reverse proxy or load balancer, wrap the app in Werkzeug's `ProxyFix` so the limit applies to each visitor's real IP. Otherwise everyone shares the proxy's address and one person guessing codes could lock everybody out.
+
 ## How a pick is made
 
 1. Searches cuisines you both chose. If you chose none in common, it searches both people's picks. If nothing turns up, it widens the radius once.

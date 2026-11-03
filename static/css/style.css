@@ -259,7 +259,8 @@ input[type="text"]:focus {
 
 #session_code {
     font-size: 1.4rem;
-    letter-spacing: 0.3em;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
     text-align: center;
 }
 

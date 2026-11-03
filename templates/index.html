@@ -13,9 +13,9 @@
 
         <form action="{{ url_for('join_session') }}" method="post" class="option-box">
             <h2>Join</h2>
-            <label for="session_code" class="hint">Enter the 4-digit code your partner sent.</label>
-            <input type="text" id="session_code" name="session_code" placeholder="1234" maxlength="4"
-                   inputmode="numeric" pattern="[0-9]{4}" autocomplete="off" required>
+            <label for="session_code" class="hint">Enter the 6-character code your partner sent.</label>
+            <input type="text" id="session_code" name="session_code" placeholder="K7QM2P" maxlength="6"
+                   pattern="[A-Za-z0-9]{6}" autocapitalize="characters" autocomplete="off" spellcheck="false" required>
             <button type="submit" class="secondary">Join session</button>
         </form>
     </div>
