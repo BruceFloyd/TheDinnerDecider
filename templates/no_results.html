@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Nothing nearby - Dinner Decider{% endblock %}
+
+{% block content %}
+    {% if search_failed %}
+        <h1>Restaurant search isn't working</h1>
+        <p class="lead">The restaurant search failed, so this isn't about your picks. Whoever runs this app should check the Google Maps API key and that the Places API is enabled.</p>
+    {% else %}
+        <h1>Nothing matched</h1>
+        <p class="lead">We couldn't find restaurants that fit both of your picks, even after widening the search. Try again with more cuisines, a bigger budget, a wider distance, or without "open right now".</p>
+    {% endif %}
+    <form action="{{ url_for('create_session') }}" method="post" class="center">
+        <button type="submit">Start a new session</button>
+    </form>
+{% endblock %}

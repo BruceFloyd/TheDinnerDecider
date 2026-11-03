@@ -1,21 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dinner Decider - Result</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Your Dinner Decision!</h1>
-        <p>Session Code: {{ session_code }}</p>
-        {% if chosen_restaurant %}
-            <p>You should go to: <strong>{{ chosen_restaurant }}</strong></p>
+{% extends 'base.html' %}
+
+{% block title %}{{ top.name }} - Dinner Decider{% endblock %}
+
+{% macro vote_label(v) -%}
+    {{ ['Nah', 'Sure', 'Love it'][v] }}
+{%- endmacro %}
+
+{% block content %}
+    {% if top.score == 0 %}
+        <h1>You both passed on everything</h1>
+        <p class="lead">Try again with more cuisines, a bigger budget, or a wider distance.</p>
+    {% else %}
+        {% if top.mutual %}
+            <p class="eyebrow">It's a match</p>
         {% else %}
-            <p>No common restaurant found based on your votes.</p>
+            <p class="eyebrow">No perfect match. Best compromise:</p>
         {% endif %}
-        <a href="/">Start a new session</a>
-    </div>
-</body>
-</html>
+        <h1>{{ top.name }}</h1>
+        <div class="place-meta center">
+            {% if top.rating %}<span>★ {{ '%.1f' % top.rating }}</span>{% endif %}
+            {% if top.price %}<span>{{ '$' * top.price }}</span>{% endif %}
+            {% if top.cuisine %}<span>{{ top.cuisine }}</span>{% endif %}
+            {% if top.distance.get(seat) is not none %}<span>{{ top.distance[seat] }} mi from you</span>{% endif %}
+        </div>
+        <p class="muted center">{{ top.vicinity }}</p>
+        <p class="center muted">You: {{ vote_label(top.votes[seat - 1]) }} · Partner: {{ vote_label(top.votes[partner - 1]) }}</p>
+        <div class="actions">
+            <a class="button" href="{{ top.directions_url }}" target="_blank" rel="noopener">Get directions</a>
+            <a class="button secondary" href="{{ top.maps_url }}" target="_blank" rel="noopener">Menu, hours &amp; phone</a>
+        </div>
+
+        {% set runners = ranked[1:4] | selectattr('score') | list %}
+        {% if runners %}
+            <h2>Runners-up</h2>
+            <ul class="runner-list">
+                {% for place in runners %}
+                    <li>
+                        <a href="{{ place.maps_url }}" target="_blank" rel="noopener">{{ place.name }}</a>
+                        <span class="muted">
+                            {% if place.mutual %}You both said yes{% else %}You: {{ vote_label(place.votes[seat - 1]) }} · Partner: {{ vote_label(place.votes[partner - 1]) }}{% endif %}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% endif %}
+
+    <form action="{{ url_for('create_session') }}" method="post" class="center">
+        <button type="submit" class="secondary small">Start a new session</button>
+    </form>
+{% endblock %}
