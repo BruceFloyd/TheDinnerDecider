@@ -1,57 +1,108 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Session {{ session_code }}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Session Code: {{ session_code }}</h1>
-        <p>Welcome, User {{ user_id }}!</p>
-        <p>Share this code with your partner: <strong>{{ session_code }}</strong></p>
-        <p id="location-status">Please share your location to continue.</p>
-        <button id="share-location-btn">Share Location</button>
-        <a href="{{ url_for('questionnaire', session_code=session_code) }}" id="start-questionnaire-link" class="disabled-link"><button id="start-questionnaire-btn" disabled>Start Questionnaire</button></a>
-        <br><br>
-        <a href="/">Back to Home</a>
-    </div>
-    <script>
-        document.getElementById('share-location-btn').addEventListener('click', () => {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    const location = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    fetch(`/share_location/{{ session_code }}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(location)
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            document.getElementById('location-status').textContent = 'Location shared successfully!';
-                            document.getElementById('start-questionnaire-btn').disabled = false;
-                            document.getElementById('start-questionnaire-link').classList.remove('disabled-link');
-                        } else {
-                            document.getElementById('location-status').textContent = 'Error sharing location.';
-                        }
-                    });
-                });
-            } else {
-                document.getElementById('location-status').textContent = 'Geolocation is not supported by this browser.';
-            }
-        });
-    </script>
-    <style>
-        .disabled-link {
-            pointer-events: none;
+{% extends 'base.html' %}
+
+{% block title %}Session {{ session_code }} - Dinner Decider{% endblock %}
+
+{% block content %}
+    <h1>What are you in the mood for?</h1>
+    {% include 'share.html' %}
+
+    <form action="{{ url_for('submit_prefs', session_code=session_code) }}" method="post" id="prefs-form" class="prefs">
+        <fieldset>
+            <legend>Where are you?</legend>
+            <div class="location-row">
+                <button type="button" class="secondary small" id="locate-btn">Use my location</button>
+                <span class="hint">or</span>
+                <input type="text" name="address" id="address" placeholder="ZIP code or address" autocomplete="postal-code">
+            </div>
+            <input type="hidden" name="lat" id="lat">
+            <input type="hidden" name="lng" id="lng">
+            <p class="hint" id="location-status" aria-live="polite">We search halfway between the two of you.</p>
+        </fieldset>
+
+        <fieldset>
+            <legend>Cuisines you'd be happy with</legend>
+            <p class="hint">Pick as many as you like. Pick none if anything goes.</p>
+            <div class="chip-group">
+                {% for cuisine in cuisines %}
+                    <input type="checkbox" id="c-{{ loop.index }}" name="cuisine" value="{{ cuisine }}">
+                    <label for="c-{{ loop.index }}">{{ cuisine }}</label>
+                {% endfor %}
+            </div>
+        </fieldset>
+
+        <div class="field-row">
+            <fieldset>
+                <legend>How far will you go?</legend>
+                <select name="radius" aria-label="Maximum distance">
+                    {% for r in radius_options %}
+                        <option value="{{ r }}" {% if r == 5 %}selected{% endif %}>Within {{ r }} mi</option>
+                    {% endfor %}
+                </select>
+            </fieldset>
+
+            <fieldset>
+                <legend>Budget</legend>
+                <div class="chip-group segmented">
+                    {% for level in range(1, 5) %}
+                        <input type="radio" id="p-{{ level }}" name="max_price" value="{{ level }}" {% if level == 3 %}checked{% endif %}>
+                        <label for="p-{{ level }}" title="Up to {{ '$' * level }}">{{ '$' * level }}</label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+        </div>
+
+        <label class="toggle">
+            <input type="checkbox" name="open_now" checked>
+            Only places open right now
+        </label>
+
+        <button type="submit">Find restaurants</button>
+    </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const latInput = document.getElementById('lat');
+    const lngInput = document.getElementById('lng');
+    const address = document.getElementById('address');
+    const status = document.getElementById('location-status');
+    const locateBtn = document.getElementById('locate-btn');
+
+    locateBtn.addEventListener('click', () => {
+        if (!navigator.geolocation) {
+            status.textContent = "Your browser can't share location. Type a ZIP code instead.";
+            address.focus();
+            return;
         }
-    </style>
-</body>
-</html>
+        status.textContent = 'Finding you…';
+        navigator.geolocation.getCurrentPosition(
+            (pos) => {
+                latInput.value = pos.coords.latitude;
+                lngInput.value = pos.coords.longitude;
+                address.value = '';
+                locateBtn.textContent = 'Location set ✓';
+                status.textContent = 'Got it. We only use this to find places between you.';
+            },
+            () => {
+                status.textContent = "Couldn't get your location. Type a ZIP code or address instead.";
+                address.focus();
+            },
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        );
+    });
+
+    address.addEventListener('input', () => {
+        latInput.value = '';
+        lngInput.value = '';
+        locateBtn.textContent = 'Use my location';
+    });
+
+    document.getElementById('prefs-form').addEventListener('submit', (e) => {
+        if (!latInput.value && !address.value.trim()) {
+            e.preventDefault();
+            status.textContent = 'Share your location or type a ZIP code first.';
+            address.focus();
+        }
+    });
+</script>
+{% endblock %}

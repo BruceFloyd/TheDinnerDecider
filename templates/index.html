@@ -1,32 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dinner Decider</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Welcome to Dinner Decider!</h1>
-        <p>Choose an option:</p>
+{% extends 'base.html' %}
 
-        <div class="session-options">
-            <div class="option-box">
-                <h2>Create a Session</h2>
-                <form action="/create_session" method="post">
-                    <button type="submit">Create Session</button>
-                </form>
-            </div>
+{% block content %}
+    <h1>Dinner Decider</h1>
+    <p class="lead">Two people, one restaurant, no arguing. Pick what you're in the mood for, swipe through what's nearby, and get the place you both said yes to.</p>
 
-            <div class="option-box">
-                <h2>Join a Session</h2>
-                <form action="/join_session" method="post">
-                    <input type="text" name="session_code" placeholder="Enter 4-digit code" maxlength="4" required>
-                    <button type="submit">Join Session</button>
-                </form>
-            </div>
-        </div>
+    <div class="session-options">
+        <form action="{{ url_for('create_session') }}" method="post" class="option-box">
+            <h2>Start</h2>
+            <p class="hint">You'll get a link to send your partner.</p>
+            <button type="submit">Create a session</button>
+        </form>
+
+        <form action="{{ url_for('join_session') }}" method="post" class="option-box">
+            <h2>Join</h2>
+            <label for="session_code" class="hint">Enter the 6-character code your partner sent.</label>
+            <input type="text" id="session_code" name="session_code" placeholder="K7QM2P" maxlength="6"
+                   pattern="[A-Za-z0-9]{6}" autocapitalize="characters" autocomplete="off" spellcheck="false" required>
+            <button type="submit" class="secondary">Join session</button>
+        </form>
     </div>
-</body>
-</html>
+{% endblock %}

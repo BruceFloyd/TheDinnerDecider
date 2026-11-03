@@ -1,0 +1,30 @@
+<div class="share-box">
+    <div>
+        <span class="hint">Session code</span>
+        <span class="code">{{ session_code }}</span>
+    </div>
+    <button type="button" class="secondary small" id="share-btn" data-url="{{ share_url }}">Send link to partner</button>
+    <p class="partner-status" id="partner-status">
+        {% if partner_joined %}Your partner has joined.{% else %}Waiting for your partner to open the link.{% endif %}
+    </p>
+</div>
+<script>
+    document.getElementById('share-btn').addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const url = btn.dataset.url;
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: 'Dinner Decider', text: "Help me pick where to eat:", url });
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') return;
+            }
+        }
+        try {
+            await navigator.clipboard.writeText(url);
+            btn.textContent = 'Link copied';
+        } catch (err) {
+            window.prompt('Copy this link and send it:', url);
+        }
+    });
+</script>

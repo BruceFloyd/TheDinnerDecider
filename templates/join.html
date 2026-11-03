@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Join session {{ session_code }} - Dinner Decider{% endblock %}
+
+{% block content %}
+    <h1>You're invited to pick dinner</h1>
+    <p class="lead">Your partner started session {{ session_code }}. Join to share what you're in the mood for, then vote on places between you.</p>
+    <form action="{{ url_for('claim_seat_route', session_code=session_code) }}" method="post" class="center">
+        <button type="submit">Join session {{ session_code }}</button>
+    </form>
+{% endblock %}

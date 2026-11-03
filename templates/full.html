@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block title %}Session full - Dinner Decider{% endblock %}
+
+{% block content %}
+    <h1>This session already has two people</h1>
+    <p class="lead">Session {{ session_code }} is for two. If you're one of them, open the link on the device you used first.</p>
+    <form action="{{ url_for('create_session') }}" method="post" class="center">
+        <button type="submit">Start your own session</button>
+    </form>
+{% endblock %}

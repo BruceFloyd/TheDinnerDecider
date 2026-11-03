@@ -1,17 +1,37 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waiting...</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <meta http-equiv="refresh" content="5">
-</head>
-<body>
-    <div class="container">
-        <h1>Waiting for your partner to submit their responses...</h1>
-        <p>Session Code: {{ session_code }}</p>
-        <p>You will be redirected automatically.</p>
-    </div>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Waiting - Dinner Decider{% endblock %}
+
+{% block content %}
+    {% if stage == 'wait_prefs' %}
+        <h1>Waiting for your partner's picks</h1>
+        <p class="lead">As soon as they're in, we'll find places halfway between you. This page moves on by itself.</p>
+        {% include 'share.html' %}
+    {% else %}
+        <h1>Waiting for your partner to vote</h1>
+        <p class="lead">Your votes are in. You'll see the winner as soon as they finish.</p>
+    {% endif %}
+    <div class="spinner" aria-hidden="true"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const current = {{ stage | tojson }};
+    const statusEl = document.getElementById('partner-status');
+    async function poll() {
+        try {
+            const res = await fetch({{ url_for('session_status', session_code=session_code) | tojson }}, { cache: 'no-store' });
+            const data = await res.json();
+            if (data.stage !== current) {
+                window.location.reload();
+                return;
+            }
+            if (statusEl && data.partner_joined) statusEl.textContent = 'Your partner has joined.';
+        } catch (err) {
+            // Network blip: try again on the next tick.
+        }
+        setTimeout(poll, 2000);
+    }
+    setTimeout(poll, 2000);
+</script>
+{% endblock %}

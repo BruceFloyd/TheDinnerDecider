@@ -1,24 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dinner Decider - Voting</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <h1>Vote for your favorite restaurants!</h1>
-        <p>Session Code: {{ session_code }}</p>
-        <form action="/submit_vote/{{ session_code }}" method="post">
-            {% for restaurant in restaurants %}
-                <div class="restaurant-option">
-                    <input type="checkbox" id="{{ restaurant.name }}" name="restaurant" value="{{ restaurant.name }}">
-                    <label for="{{ restaurant.name }}">{{ restaurant.name }} - <em>{{ restaurant.vicinity }}</em></label>
+{% extends 'base.html' %}
+
+{% block title %}Vote - Dinner Decider{% endblock %}
+
+{% macro stars(place) -%}
+    {% if place.rating %}★ {{ '%.1f' % place.rating }} <span class="muted">({{ '{:,}'.format(place.reviews) }})</span>{% endif %}
+{%- endmacro %}
+
+{% block content %}
+    <h1>Would you eat here?</h1>
+    {% if not cuisine_overlap %}
+        <p class="notice">You didn't pick any of the same cuisines, so here's a mix of both your picks.</p>
+    {% endif %}
+    <p class="lead">Mark each place. Your partner can't see your answers until you both finish.</p>
+
+    <form action="{{ url_for('submit_vote', session_code=session_code) }}" method="post" class="vote-list">
+        {% for place in restaurants %}
+            <div class="place-card">
+                <div class="place-info">
+                    <a href="{{ place.maps_url }}" target="_blank" rel="noopener" class="place-name">{{ place.name }}</a>
+                    <div class="place-meta">
+                        {{ stars(place) }}
+                        {% if place.price %}<span>{{ '$' * place.price }}</span>{% endif %}
+                        {% if place.cuisine %}<span>{{ place.cuisine }}</span>{% endif %}
+                        {% if place.distance.get(seat) is not none %}<span>{{ place.distance[seat] }} mi from you</span>{% endif %}
+                        {% if place.open_now %}<span class="open">Open now</span>{% endif %}
+                    </div>
+                    <div class="muted small-text">{{ place.vicinity }}</div>
                 </div>
-            {% endfor %}
-            <button type="submit">Submit Votes</button>
-        </form>
-    </div>
-</body>
-</html>
+                <div class="vote-choice" role="radiogroup" aria-label="Your vote for {{ place.name }}">
+                    {% set field = 'vote_' ~ place.place_id %}
+                    <input type="radio" id="{{ field }}-0" name="{{ field }}" value="0" checked>
+                    <label for="{{ field }}-0" class="no">Nah</label>
+                    <input type="radio" id="{{ field }}-1" name="{{ field }}" value="1">
+                    <label for="{{ field }}-1" class="yes">Sure</label>
+                    <input type="radio" id="{{ field }}-2" name="{{ field }}" value="2">
+                    <label for="{{ field }}-2" class="love">Love it</label>
+                </div>
+            </div>
+        {% endfor %}
+        <button type="submit">Submit my votes</button>
+    </form>
+{% endblock %}
